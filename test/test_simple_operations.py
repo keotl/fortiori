@@ -5,7 +5,7 @@ from jivago_streams import Stream
 
 from dialect.simple_operations import remove_curly_brackets, strip_comments, remove_line_splits_inside_blocks, \
     move_function_parameter_type_declaration_to_body, move_variable_declaration_to_start_of_block, \
-    translate_return_statement
+    translate_return_statement, declare_invoked_function_return_types
 
 
 class SimpleOperationsTest(unittest.TestCase):
@@ -90,6 +90,24 @@ class SimpleOperationsTest(unittest.TestCase):
         }"""
 
         actual = translate_return_statement(input)
+
+        self.assertEqualIgnoreWhitespace(expected, actual)
+
+    def test_declareUsedFunctionReturnTypes(self):
+        input = """integer function myFunction() {
+        }
+        program {
+        myFunction();
+        }
+        """
+        expected = """integer function myFunction() {
+        }
+        program {
+        integer::myFunction;
+        myFunction();
+        }"""
+
+        actual = declare_invoked_function_return_types(input)
 
         self.assertEqualIgnoreWhitespace(expected, actual)
 

@@ -4,6 +4,7 @@ from typing import List, Iterable
 from jivago_streams import Stream
 
 from dialect.edits import CodeEdit, apply_edits, remove_unused_whitespace
+from dialect.exceptions import TranslationException
 from dialect.type import VariableDeclaration, FunctionBlock
 
 VALID_BLOCK_NAMES = ("function", "subroutine", "module", "do", "if", "program")
@@ -156,8 +157,8 @@ def move_variable_declaration_to_start_of_block(text: str) -> str:
     return apply_edits(text, edits)
 
 
-def _find_function_blocks(text: str) -> Iterable[FunctionBlock]:
-    for declaration in re.finditer(r"^.*function([^\(]+)(\(.*\))?.*$", text, flags=re.M):
+def _find_function_blocks(text: str, block_name: str = "function") -> Iterable[FunctionBlock]:
+    for declaration in re.finditer(r"^.*" + block_name + r"([^\(]+)(\(.*\))?.*$", text, flags=re.M):
         if _is_inside_string_block(declaration.start(), text):
             continue
         block_start = text.index("{", declaration.start()) + 1
@@ -192,5 +193,27 @@ def translate_return_statement(text: str) -> str:
                                   function_block.block_start + return_statement.end(),
                                   f"{function_block.function_name} = {returned_value};\n"
                                   "return;"))
+
+    return apply_edits(text, edits)
+
+
+def declare_invoked_function_return_types(text: str) -> str:
+    edits: List[CodeEdit] = []
+    for block_name in BLOCKS_WHICH_DECLARE_VARIABLES:
+        for block in _find_function_blocks(text, block_name=block_name):
+            declaration_statements = []
+            content = text[block.block_start:block.block_end]
+            for function_call in re.finditer(r"([^ \n\t]+)\(.*\)", content):
+                invoked_function_name = function_call.group(1)
+                invoked_function_declaration = re.search(
+                    r"([^ \n\t]+)\s+function\s+" + invoked_function_name + r"\(.*\)",
+                    text)
+                if not invoked_function_name:
+                    raise TranslationException(f"Function {invoked_function_name} is never declared.")
+
+                function_declared_type = invoked_function_declaration.group(1)
+                declaration_statements.append(f"{function_declared_type}::{invoked_function_name};")
+
+            edits.append(CodeEdit(block.block_start, block.block_start, "\n" + "\n".join(declaration_statements) + "\n"))
 
     return apply_edits(text, edits)
