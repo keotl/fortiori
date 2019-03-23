@@ -2,7 +2,8 @@ from argparse import ArgumentParser
 
 from dialect.simple_operations import move_function_parameter_type_declaration_to_body, \
     remove_line_splits_inside_blocks, remove_curly_brackets, strip_comments, \
-    move_variable_declaration_to_start_of_block, translate_return_statement, declare_invoked_function_return_types
+    move_variable_declaration_to_start_of_block, translate_return_statement, declare_invoked_function_return_types, \
+    add_implicit_none
 
 parser = ArgumentParser(description="FORTRAN transpiler")
 
@@ -21,6 +22,7 @@ for file in args.files:
         text = declare_invoked_function_return_types(text)
         text = translate_return_statement(text)
         text = remove_line_splits_inside_blocks(text)
+        text = add_implicit_none(text)
         text = remove_curly_brackets(text)
 
         with open(args.output_dir, 'w') as outfile:

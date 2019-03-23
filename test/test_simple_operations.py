@@ -5,7 +5,7 @@ from jivago_streams import Stream
 
 from dialect.simple_operations import remove_curly_brackets, strip_comments, remove_line_splits_inside_blocks, \
     move_function_parameter_type_declaration_to_body, move_variable_declaration_to_start_of_block, \
-    translate_return_statement, declare_invoked_function_return_types
+    translate_return_statement, declare_invoked_function_return_types, add_implicit_none
 
 
 class SimpleOperationsTest(unittest.TestCase):
@@ -108,6 +108,17 @@ class SimpleOperationsTest(unittest.TestCase):
         }"""
 
         actual = declare_invoked_function_return_types(input)
+
+        self.assertEqualIgnoreWhitespace(expected, actual)
+
+    def test_addImplicitNoneToEveryCodeBlock(self):
+        input = """integer function myFunction() {
+        }"""
+        expected = """integer function myFunction() {
+        implicit none;
+        }"""
+
+        actual = add_implicit_none(input)
 
         self.assertEqualIgnoreWhitespace(expected, actual)
 

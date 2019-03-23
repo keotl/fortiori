@@ -3,7 +3,7 @@ integer function getFirstPrime(integer::lower, integer::higher) {
 }
 
 program myProgram {
-    print("Getting a prime...");
+    print*, "Getting a prime...";
     integer::aPrime = getFirstPrime(1,10);
-    print("This is a prime:", aPrime);
+    print*, "This is a prime:", aPrime;
 }

@@ -117,7 +117,7 @@ def move_function_parameter_type_declaration_to_body(text: str) -> str:
     return apply_edits(text, edits)
 
 
-BLOCKS_WHICH_DECLARE_VARIABLES = ("function", "procedure", "program")
+BLOCKS_WHICH_DECLARE_VARIABLES = ("function", "subroutine", "program")
 
 
 def move_variable_declaration_to_start_of_block(text: str) -> str:
@@ -214,6 +214,16 @@ def declare_invoked_function_return_types(text: str) -> str:
                 function_declared_type = invoked_function_declaration.group(1)
                 declaration_statements.append(f"{function_declared_type}::{invoked_function_name};")
 
-            edits.append(CodeEdit(block.block_start, block.block_start, "\n" + "\n".join(declaration_statements) + "\n"))
+            edits.append(
+                CodeEdit(block.block_start, block.block_start, "\n" + "\n".join(declaration_statements) + "\n"))
+
+    return apply_edits(text, edits)
+
+
+def add_implicit_none(text: str) -> str:
+    edits: List[CodeEdit] = []
+    for block_name in BLOCKS_WHICH_DECLARE_VARIABLES:
+        for block in _find_function_blocks(text, block_name):
+            edits.append(CodeEdit(block.block_start, block.block_start, "\nimplicit none;\n"))
 
     return apply_edits(text, edits)
