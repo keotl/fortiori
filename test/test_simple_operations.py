@@ -4,7 +4,7 @@ import unittest
 from jivago_streams import Stream
 
 from dialect.simple_operations import remove_curly_brackets, strip_comments, remove_line_splits_inside_blocks, \
-    move_function_parameter_type_declaration_to_body
+    move_function_parameter_type_declaration_to_body, move_variable_declaration_to_start_of_block
 
 
 class SimpleOperationsTest(unittest.TestCase):
@@ -51,6 +51,31 @@ class SimpleOperationsTest(unittest.TestCase):
         }"""
 
         actual = move_function_parameter_type_declaration_to_body(input)
+
+        self.assertEqualIgnoreWhitespace(expected, actual)
+
+    def test_moveVariableDeclarationToStartOfFunction(self):
+        input = """void function myFunction() {
+        print("hello");
+        integer::a = 30;
+        }
+        program {
+        stuff;
+        integer::aNumber = 40;
+        }"""
+        expected = """void function myFunction() {
+        integer::a;
+        print("hello");
+        a = 30;
+        }
+        program {
+        integer::aNumber;
+        stuff;
+        aNumber = 40;
+        }
+        """
+
+        actual = move_variable_declaration_to_start_of_block(input)
 
         self.assertEqualIgnoreWhitespace(expected, actual)
 

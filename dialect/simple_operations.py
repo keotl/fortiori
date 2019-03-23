@@ -111,5 +111,46 @@ def move_function_parameter_type_declaration_to_body(text: str) -> str:
                                   Stream(parameter_declarations).map(lambda x: x.identifier)) + ")"))
         edits.append(CodeEdit(function_opening_curly_bracket,
                               function_opening_curly_bracket + 1,
-                              "{\n" + "\n".join(Stream(parameter_declarations).map(lambda x: f"{x.type}::{x.identifier}"))))
+                              "{\n" + "\n".join(
+                                  Stream(parameter_declarations).map(lambda x: f"{x.type}::{x.identifier}"))))
+    return apply_edits(text, edits)
+
+
+BLOCKS_WHICH_DECLARE_VARIABLES = ("function", "procedure", "program")
+
+
+def move_variable_declaration_to_start_of_block(text: str) -> str:
+    edits: List[CodeEdit] = []
+    for block_name in BLOCKS_WHICH_DECLARE_VARIABLES:
+        for declaration in re.finditer(r"^.*" + block_name + r".*(\(.*\))?.*$", text, flags=re.M):
+            block_start = text.index("{", declaration.start()) + 1
+            block_end = -1
+            depth = 0
+            for bracket in re.finditer(r"(\{|\})", text[declaration.start():]):
+                if text[bracket.start()] == "{":
+                    depth += 1
+                else:
+                    depth -= 1
+
+                if depth == 0:
+                    block_end = bracket.start()
+                    break
+
+            code_block_str = text[block_start:block_end].strip("\n \t")
+            variable_declaration_statements = []
+            other_statements = []
+
+            for statement in code_block_str.split("\n"):
+                inline_assignation_operator = re.search(r"((.|\s)+::(.|\s)+)(=[^=])", statement)
+                if inline_assignation_operator:
+                    variable_declaration_statements.append(inline_assignation_operator.group(1).strip(" \n\t") + ";\n")
+                    assignation_substatement = statement[statement.index("::")+2:]
+                    other_statements.append(assignation_substatement)
+                else:
+                    other_statements.append(statement)
+
+            edits.append(CodeEdit(block_start,
+                                  block_end,
+                                  "\n" + "\n".join(variable_declaration_statements) +
+                                  "\n".join(other_statements) + "\n"))
     return apply_edits(text, edits)

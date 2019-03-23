@@ -1,7 +1,7 @@
 from argparse import ArgumentParser
 
 from dialect.simple_operations import move_function_parameter_type_declaration_to_body, \
-    remove_line_splits_inside_blocks, remove_curly_brackets
+    remove_line_splits_inside_blocks, remove_curly_brackets, strip_comments, move_variable_declaration_to_start_of_block
 
 parser = ArgumentParser(description="FORTRAN transpiler")
 
@@ -14,7 +14,9 @@ for file in args.files:
     with open(file, 'r') as f:
         text = f.read()
 
+        text = strip_comments(text)
         text = move_function_parameter_type_declaration_to_body(text)
+        text = move_variable_declaration_to_start_of_block(text)
         text = remove_line_splits_inside_blocks(text)
         text = remove_curly_brackets(text)
 
