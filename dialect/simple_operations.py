@@ -203,8 +203,10 @@ def declare_invoked_function_return_types(text: str) -> str:
         for block in _find_function_blocks(text, block_name=block_name):
             declaration_statements = []
             content = text[block.block_start:block.block_end]
-            for function_call in re.finditer(r"([^ \n\t]+)\(.*\)", content):
-                invoked_function_name = function_call.group(1)
+            for function_call in re.finditer(r"(new\s)?([^ \n\t]+)\(.*\)", content):
+                if function_call.group(1):
+                    continue  # new was found
+                invoked_function_name = function_call.group(2)
                 invoked_function_declaration = re.search(
                     r"([^ \n\t]+)\s+function\s+" + invoked_function_name + r"\(.*\)",
                     text)

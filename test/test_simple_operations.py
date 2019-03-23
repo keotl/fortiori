@@ -99,6 +99,7 @@ class SimpleOperationsTest(unittest.TestCase):
         }
         program {
         myFunction();
+        new foobar();
         }
         """
         expected = """integer function myFunction() {
@@ -106,6 +107,7 @@ class SimpleOperationsTest(unittest.TestCase):
         program {
         integer::myFunction;
         myFunction();
+        new foobar();
         }"""
 
         actual = declare_invoked_function_return_types(input)
