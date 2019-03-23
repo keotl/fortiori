@@ -3,7 +3,7 @@ integer function get_first_prime(lower, higher)
     get_first_prime = 5
 end function get_first_prime
 
-program my_program
+program myProgram
     implicit none;
     integer :: a_prime
     integer :: get_first_prime;
@@ -12,4 +12,4 @@ program my_program
 
     print*, "This is a prime:", a_prime
 
-end program my_program
+end program myProgram

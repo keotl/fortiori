@@ -1,4 +1,3 @@
-import re
 from typing import List
 
 from jivago_streams import Stream
@@ -11,11 +10,14 @@ class CodeEdit(object):
         self.end_pos = end_pos
         self.inserted_text = inserted_text
 
+    def _apply(self, text: str) -> str:
+        return text[:self.start_pos] + self.inserted_text + text[self.end_pos:]
+
 
 def apply_edits(text: str, edits: List[CodeEdit]) -> str:
     edited = text
     for edit in reversed(edits):
-        edited = edited[:edit.start_pos] + edit.inserted_text + edited[edit.end_pos:]
+        edited = edit._apply(edited)
     return edited
 
 
