@@ -4,6 +4,7 @@ from typing import List
 from jivago_streams import Stream
 
 from dialect.edits import CodeEdit, apply_edits, remove_unused_whitespace
+from dialect.type import VariableDeclaration
 
 VALID_BLOCK_NAMES = ("function", "subroutine", "module", "do", "if", "program")
 
@@ -15,7 +16,7 @@ def strip_comments(text: str) -> str:
         if "!" in line:
             comment_markers = re.finditer("!", line)
             first_comment_marker_index = Stream(comment_markers) \
-                .map(lambda matcher: matcher.regs[0][0]) \
+                .map(lambda matcher: matcher.start()) \
                 .filter(lambda pos: not _is_inside_string_block(pos, line)) \
                 .first()
             if first_comment_marker_index.isPresent():
@@ -34,7 +35,7 @@ def remove_curly_brackets(text: str) -> str:
     code_edits: List[CodeEdit] = []
 
     for bracket_match in brackets:
-        start_pos, end_pos = bracket_match.regs[0]
+        start_pos, end_pos = bracket_match.start(), bracket_match.end()
         if _is_inside_string_block(start_pos, text):
             continue
         if text[start_pos] == '{':
@@ -73,3 +74,42 @@ def _is_inside_string_block(position: int, text: str) -> bool:
         if quotes_count % 2 == 1:
             return True
     return False
+
+
+def move_function_parameter_type_declaration_to_body(text: str) -> str:
+    edits: List[CodeEdit] = []
+    for function_declaration in re.finditer(r"^\s*\S+( |\n)+function( |\n)+.+( |\n)*\(", text):
+        if _is_inside_string_block(function_declaration.start(), text):
+            continue
+
+        depth = 1
+        declaration_closing_parenthesis = None
+        for parenthesis in re.finditer(r"(\(|\))", text[function_declaration.end():]):
+            if text[parenthesis.start()] == '(':
+                depth += 1
+            else:
+                depth -= 1
+            if depth == 0:
+                declaration_closing_parenthesis = parenthesis.start() + function_declaration.end()
+
+        function_opening_curly_bracket = text.index("{", function_declaration.end())
+        parameter_str = text[function_declaration.end():declaration_closing_parenthesis]
+
+        parameter_declarations: List[VariableDeclaration] = []
+        parameter = re.search(r"::( |\n)*[^,\) \n]+", parameter_str)
+        while parameter:
+            identifier = parameter_str[parameter.start() + 2:parameter.end()].strip(" \n\t")
+            declared_type = parameter_str[:parameter.start()].strip(", \n\t")
+            parameter_declarations.append(VariableDeclaration(declared_type, identifier))
+
+            parameter_str = parameter_str[parameter.end():]
+            parameter = re.search(r"::( |\n)*[^,\) \n]+", parameter_str)
+
+        edits.append(CodeEdit(function_declaration.start(),
+                              declaration_closing_parenthesis + 1,
+                              text[function_declaration.start():function_declaration.end()] + ",".join(
+                                  Stream(parameter_declarations).map(lambda x: x.identifier)) + ")"))
+        edits.append(CodeEdit(function_opening_curly_bracket,
+                              function_opening_curly_bracket + 1,
+                              "{\n" + "\n".join(Stream(parameter_declarations).map(lambda x: f"{x.type}::{x.identifier}"))))
+    return apply_edits(text, edits)

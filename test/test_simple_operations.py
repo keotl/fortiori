@@ -3,20 +3,21 @@ import unittest
 
 from jivago_streams import Stream
 
-from dialect.simple_operations import remove_curly_brackets, strip_comments, remove_line_splits_inside_blocks
+from dialect.simple_operations import remove_curly_brackets, strip_comments, remove_line_splits_inside_blocks, \
+    move_function_parameter_type_declaration_to_body
 
 
 class SimpleOperationsTest(unittest.TestCase):
 
     def test_curlyBrackets(self):
-        input = """function foobar {
+        input = """function foobar() {
         do i=1,10 {
         some stuff !}
         "!" ! "foobar!!
         
         stuff
         }}"""
-        expected = """function foobar
+        expected = """function foobar()
         do i=1,10
         some stuff
         "!"
@@ -37,6 +38,19 @@ class SimpleOperationsTest(unittest.TestCase):
         expected = """print(10,11,13,14);"""
 
         actual = remove_line_splits_inside_blocks(input)
+
+        self.assertEqualIgnoreWhitespace(expected, actual)
+
+    def test_inlineParameterDeclaration(self):
+        input = """integer function myFunction(integer::a, integer,pointer :: b) 
+        {
+        }"""
+        expected = """integer function myFunction(a,b) {
+        integer::a
+        integer,pointer::b
+        }"""
+
+        actual = move_function_parameter_type_declaration_to_body(input)
 
         self.assertEqualIgnoreWhitespace(expected, actual)
 

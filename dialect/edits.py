@@ -16,7 +16,7 @@ class CodeEdit(object):
 
 def apply_edits(text: str, edits: List[CodeEdit]) -> str:
     edited = text
-    for edit in reversed(edits):
+    for edit in sorted(edits, key=lambda edit: edit.start_pos, reverse=True):
         edited = edit._apply(edited)
     return edited
 
