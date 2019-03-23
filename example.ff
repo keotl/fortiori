@@ -1,9 +1,8 @@
-integer :: function getFirstPrime(integer::lower, integer::higher) {
+integer function getFirstPrime(integer::lower, integer::higher) {
     return 5;
 }
 
 program myProgram {
     integer :: aPrime = getFirstPrime(10, 100);
-
     print("This is a prime :", aPrime);
 }
