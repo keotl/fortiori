@@ -1,10 +1,10 @@
 import re
-from typing import List
+from typing import List, Iterable
 
 from jivago_streams import Stream
 
 from dialect.edits import CodeEdit, apply_edits, remove_unused_whitespace
-from dialect.type import VariableDeclaration
+from dialect.type import VariableDeclaration, FunctionBlock
 
 VALID_BLOCK_NAMES = ("function", "subroutine", "module", "do", "if", "program")
 
@@ -144,7 +144,7 @@ def move_variable_declaration_to_start_of_block(text: str) -> str:
                 inline_assignation_operator = re.search(r"((.|\s)+::(.|\s)+)(=[^=])", statement)
                 if inline_assignation_operator:
                     variable_declaration_statements.append(inline_assignation_operator.group(1).strip(" \n\t") + ";\n")
-                    assignation_substatement = statement[statement.index("::")+2:]
+                    assignation_substatement = statement[statement.index("::") + 2:]
                     other_statements.append(assignation_substatement)
                 else:
                     other_statements.append(statement)
@@ -153,4 +153,44 @@ def move_variable_declaration_to_start_of_block(text: str) -> str:
                                   block_end,
                                   "\n" + "\n".join(variable_declaration_statements) +
                                   "\n".join(other_statements) + "\n"))
+    return apply_edits(text, edits)
+
+
+def _find_function_blocks(text: str) -> Iterable[FunctionBlock]:
+    for declaration in re.finditer(r"^.*function([^\(]+)(\(.*\))?.*$", text, flags=re.M):
+        if _is_inside_string_block(declaration.start(), text):
+            continue
+        block_start = text.index("{", declaration.start()) + 1
+        block_end = -1
+        depth = 0
+        function_name = declaration.group(1)
+        for bracket in re.finditer(r"(\{|\})", text[declaration.start():]):
+            if text[bracket.start()] == "{":
+                depth += 1
+            else:
+                depth -= 1
+
+            if depth == 0:
+                block_end = bracket.start()
+                break
+
+        yield FunctionBlock(function_name, block_start, block_end, text[block_start:block_end].strip("\n \t"))
+
+
+def translate_return_statement(text: str) -> str:
+    edits: List[CodeEdit] = []
+    for function_block in _find_function_blocks(text):
+        content = text[function_block.block_start:function_block.block_end]
+        if "return" not in content:
+            continue
+
+        for return_statement in re.finditer(r"return\s+(.+);", content):
+            if _is_inside_string_block(return_statement.start(), text):
+                continue
+            returned_value = return_statement.group(1)
+            edits.append(CodeEdit(function_block.block_start + return_statement.start(),
+                                  function_block.block_start + return_statement.end(),
+                                  f"{function_block.function_name} = {returned_value};\n"
+                                  "return;"))
+
     return apply_edits(text, edits)

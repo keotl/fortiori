@@ -4,7 +4,8 @@ import unittest
 from jivago_streams import Stream
 
 from dialect.simple_operations import remove_curly_brackets, strip_comments, remove_line_splits_inside_blocks, \
-    move_function_parameter_type_declaration_to_body, move_variable_declaration_to_start_of_block
+    move_function_parameter_type_declaration_to_body, move_variable_declaration_to_start_of_block, \
+    translate_return_statement
 
 
 class SimpleOperationsTest(unittest.TestCase):
@@ -76,6 +77,19 @@ class SimpleOperationsTest(unittest.TestCase):
         """
 
         actual = move_variable_declaration_to_start_of_block(input)
+
+        self.assertEqualIgnoreWhitespace(expected, actual)
+
+    def test_return_statement(self):
+        input = """integer function myFunction() {
+        return 5;
+        }"""
+        expected = """integer function myFunction() {
+        myFunction = 5;
+        return;
+        }"""
+
+        actual = translate_return_statement(input)
 
         self.assertEqualIgnoreWhitespace(expected, actual)
 
