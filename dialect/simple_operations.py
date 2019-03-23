@@ -55,7 +55,15 @@ def _previous_keyword(text: str, bracket_position: int) -> str:
 
 
 def remove_line_splits_inside_blocks(text: str) -> str:
-    pass
+    depth = 0
+    result = ""
+    for line in text.split("\n"):
+        depth += line.count("(") - line.count(")")
+        if depth > 0:
+            result += line
+        else:
+            result += line + "\n"
+    return result
 
 
 def _is_inside_string_block(position: int, text: str) -> bool:
