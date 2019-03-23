@@ -5,7 +5,8 @@ from jivago_streams import Stream
 
 from dialect.simple_operations import remove_curly_brackets, strip_comments, remove_line_splits_inside_blocks, \
     move_function_parameter_type_declaration_to_body, move_variable_declaration_to_start_of_block, \
-    translate_return_statement, declare_invoked_function_return_types, add_implicit_none
+    translate_return_statement, declare_invoked_function_return_types, add_implicit_none, \
+    add_name_to_unnamed_program_blocks
 
 
 class SimpleOperationsTest(unittest.TestCase):
@@ -121,6 +122,24 @@ class SimpleOperationsTest(unittest.TestCase):
         actual = add_implicit_none(input)
 
         self.assertEqualIgnoreWhitespace(expected, actual)
+
+    def test_addProgramNameToUnnamedPrograms(self):
+        input = """integer function myFunction() {
+        }
+        program 
+        {
+        stuff;
+        }"""
+        expected = """integer function myFunction() {
+        }
+        program main {
+        stuff;
+        }"""
+
+        actual = add_name_to_unnamed_program_blocks(input)
+
+        self.assertEqualIgnoreWhitespace(expected, actual)
+
 
     def assertEqualIgnoreWhitespace(self, expected: str, actual: str) -> None:
         expected = re.sub(" *, *", ",", expected)

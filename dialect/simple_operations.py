@@ -227,3 +227,13 @@ def add_implicit_none(text: str) -> str:
             edits.append(CodeEdit(block.block_start, block.block_start, "\nimplicit none;\n"))
 
     return apply_edits(text, edits)
+
+
+def add_name_to_unnamed_program_blocks(text: str) -> str:
+    edits: List[CodeEdit] = []
+    for program_declaration in re.finditer(r"[^\w\d]program\s*\{", text):
+        if _is_inside_string_block(program_declaration.start(), text):
+            continue
+        edits.append(CodeEdit(program_declaration.start(), program_declaration.end(), "\nprogram main {\n"))
+
+    return apply_edits(text, edits)
