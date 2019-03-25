@@ -6,7 +6,7 @@ from jivago_streams import Stream
 from dialect.simple_operations import remove_curly_brackets, strip_comments, remove_line_splits_inside_blocks, \
     move_function_parameter_type_declaration_to_body, move_variable_declaration_to_start_of_block, \
     translate_return_statement, declare_invoked_function_return_types, add_implicit_none, \
-    add_name_to_unnamed_program_blocks
+    add_name_to_unnamed_program_blocks, translate_case_sensitive_identifier
 
 
 class SimpleOperationsTest(unittest.TestCase):
@@ -142,6 +142,28 @@ class SimpleOperationsTest(unittest.TestCase):
 
         self.assertEqualIgnoreWhitespace(expected, actual)
 
+    def test_translateCaseSensitiveIdentifier(self):
+        input = """integer function myFunction() {
+        integer::aVariable1;
+        integer::AVARIABLE1;
+        
+        aVariable = 5;
+        AVARIABLE = 10;
+        myFunction(aVariable1, "fooBar");
+        }"""
+
+        expected = """integer function myf$unction() {
+        integer::av$ariable1;
+        integer::a$$variable1$$;
+        
+        av$ariable = 5;
+        a$$variable$$ = 10;
+        myf$unction(av$ariable1, "fooBar");
+        }"""
+
+        actual = translate_case_sensitive_identifier(input)
+
+        self.assertEqualIgnoreWhitespace(expected, actual)
 
     def assertEqualIgnoreWhitespace(self, expected: str, actual: str) -> None:
         expected = re.sub(" *, *", ",", expected)

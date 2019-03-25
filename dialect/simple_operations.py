@@ -239,3 +239,34 @@ def add_name_to_unnamed_program_blocks(text: str) -> str:
         edits.append(CodeEdit(program_declaration.start(), program_declaration.end(), "\nprogram main {\n"))
 
     return apply_edits(text, edits)
+
+
+def translate_case_sensitive_identifier(text: str) -> str:
+    edits: List[CodeEdit] = []
+    for word in re.finditer("\w+", text):
+        if _is_inside_string_block(word.start(), text):
+            continue
+        if word.group(0).lower() != word.group(0):
+            edits.append(CodeEdit(word.start(), word.end(), _encode_character_case(word.group(0))))
+
+    return apply_edits(text, edits)
+
+
+def _encode_character_case(word: str) -> str:
+    character_wise_encoding = Stream(word) \
+        .map(lambda x: [x] if not x.isupper() else [x.lower(), "$"]) \
+        .flat() \
+        .reduce("", lambda a, e: a + e)
+
+    caps_lock_state, caps_lock_encoding = Stream(word) \
+        .reduce((False, ""), lambda state, el:
+    (state[0], state[1] + el.lower())
+    if (state[0] is False and el.islower()) or (state[0] is True and el.isupper())
+    else (not state[0], f"{state[1]}{el.lower()}$$"))
+
+    if caps_lock_state is True:
+        caps_lock_encoding += "$$"
+
+    return character_wise_encoding \
+        if len(character_wise_encoding) <= len(caps_lock_encoding) \
+        else caps_lock_encoding

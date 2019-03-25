@@ -4,6 +4,8 @@ integer function getFirstPrime(integer::lower, integer::higher) {
 
 program {
     print*, "Getting a prime...";
-    integer::aPrime = getFirstPrime(1,10);
-    print*, "This is a prime:", aPrime;
+    integer::Prime = getFirstPrime(1,10);
+    integer::PRIME = 10;
+    print*, "This is a prime:", Prime;
+    print*, "This is another prime:", PRIME;
 }
