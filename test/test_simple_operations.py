@@ -165,6 +165,19 @@ class SimpleOperationsTest(unittest.TestCase):
 
         self.assertEqualIgnoreWhitespace(expected, actual)
 
+    def test_ifElseBlocks(self):
+        input = """integer function myFunction() {
+        if (a == 2) {
+        stuff_if;
+        } else if (a == 3) {
+        stuff_else_if;
+        } else {
+        stuff_else;
+        }
+        }"""
+
+        
+
     def assertEqualIgnoreWhitespace(self, expected: str, actual: str) -> None:
         expected = re.sub(" *, *", ",", expected)
         actual = re.sub(" *, *", ",", actual)
