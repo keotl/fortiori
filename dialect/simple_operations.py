@@ -321,7 +321,7 @@ def convert_conditional_blocks(text: str) -> str:
         block_start = else_declaration.end()
         block_end = _block_end(text, block_start)
 
-        edits.append(CodeEdit(else_declaration.start(), else_declaration.end(), "else"))
-        edits.append(CodeEdit(block_end, block_end + 1, "end if;"))
+        edits.append(CodeEdit(else_declaration.start(), else_declaration.end(), "else\n"))
+        edits.append(CodeEdit(block_end, block_end + 1, "end if;\n"))
 
     return apply_edits(text, edits)
