@@ -13,3 +13,13 @@ class FunctionBlock(object):
         self.function_name = function_name
         self.block_start = block_start
         self.block_end = block_end
+
+
+class CodeBlock(object):
+
+    def __init__(self, block_type: str, block_start: str, block_end: str, block_content: str):
+        """block start/end : Opening and closing curly brackets."""
+        self.block_type = block_type
+        self.block_content = block_content
+        self.block_start = block_start
+        self.block_end = block_end

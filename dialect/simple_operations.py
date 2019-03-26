@@ -5,9 +5,9 @@ from jivago_streams import Stream
 
 from dialect.edits import CodeEdit, apply_edits, remove_unused_whitespace
 from dialect.exceptions import TranslationException
-from dialect.type import VariableDeclaration, FunctionBlock
+from dialect.type import VariableDeclaration, FunctionBlock, CodeBlock
 
-VALID_BLOCK_NAMES = ("function", "subroutine", "module", "do", "if", "program")
+VALID_BLOCK_NAMES = ("function", "subroutine", "module", "do", "program")
 
 
 def strip_comments(text: str) -> str:
@@ -44,7 +44,7 @@ def remove_curly_brackets(text: str) -> str:
             code_edits.append(CodeEdit(start_pos, end_pos, "\n"))
         else:
             ending_block = code_block_stack.pop()
-            code_edits.append(CodeEdit(start_pos, end_pos, f"\nend {ending_block}"))
+            code_edits.append(CodeEdit(start_pos, end_pos, f"\nend {ending_block};\n"))
 
     return remove_unused_whitespace(apply_edits(text, code_edits))
 
@@ -270,3 +270,58 @@ def _encode_character_case(word: str) -> str:
     return character_wise_encoding \
         if len(character_wise_encoding) <= len(caps_lock_encoding) \
         else caps_lock_encoding
+
+
+def _next_word(text: str, start_position: int) -> str:
+    return Stream(re.finditer(r"\s*(\w+)", text[start_position:])) \
+        .firstMatch(lambda match: not _is_inside_string_block(match.start(), text)) \
+        .map(lambda match: match.group(1)) \
+        .orElse("")
+
+
+def _previous_word(text: str, search_end_position: int) -> str:
+    return Stream(reversed(list(re.finditer(r"(w+)\s*", text[:search_end_position])))) \
+        .firstMatch(lambda match: not _is_inside_string_block(match.start(), text)) \
+        .map(lambda match: match.group(1)) \
+        .orElse("")
+
+
+def _block_end(text: str, inside_first_bracket_position: int) -> int:
+    block_end = -1
+    depth = 1
+    for bracket in re.finditer(r"(\{|\})", text[inside_first_bracket_position:]):
+        if bracket.group(0) == "{":
+            depth += 1
+        else:
+            depth -= 1
+        if depth == 0:
+            block_end = bracket.start() + inside_first_bracket_position
+            break
+    return block_end
+
+
+def convert_conditional_blocks(text: str) -> str:
+    edits: List[CodeEdit] = []
+
+    for if_declaration in re.finditer(r"if\s*(\(.*\))\s*\{", text):
+        previous_word = _previous_word(text, if_declaration.start())
+        if_condition = if_declaration.group(1)
+
+        block_end = _block_end(text, if_declaration.end())
+
+        next_word = _next_word(text, block_end)
+
+        edits.append(CodeEdit(if_declaration.start(), if_declaration.end(), f"if {if_condition} then\n"))
+        edits.append(CodeEdit(block_end, block_end + 1, ""))
+
+        if next_word != "else":
+            edits.append(CodeEdit(block_end, block_end + 1, "end if;"))
+
+    for else_declaration in re.finditer(r"else\s*\{", text):
+        block_start = else_declaration.end()
+        block_end = _block_end(text, block_start)
+
+        edits.append(CodeEdit(else_declaration.start(), else_declaration.end(), "else"))
+        edits.append(CodeEdit(block_end, block_end + 1, "end if;"))
+
+    return apply_edits(text, edits)

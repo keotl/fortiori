@@ -6,6 +6,11 @@ program {
     print*, "Getting a prime...";
     integer::Prime = getFirstPrime(1,10);
     integer::PRIME = 10;
+    if (PRIME = 10) {
+    print*, "condition is true";
+    } else {
+    print*, "condition is false";
+    }
     print*, "This is a prime:", Prime;
     print*, "This is another prime:", PRIME;
 }
