@@ -144,8 +144,12 @@ def move_variable_declaration_to_start_of_block(text: str) -> str:
             for statement in code_block_str.split("\n"):
                 inline_assignation_operator = re.search(r"((.|\s)+::(.|\s)+)(=[^=])", statement)
                 if inline_assignation_operator:
-                    variable_declaration_statements.append(inline_assignation_operator.group(1).strip(" \n\t") + ";\n")
-                    assignation_substatement = statement[statement.index("::") + 2:]
+                    if inline_assignation_operator.group(1).strip(" \n\t").startswith("do"):
+                        variable_declaration_statements.append(inline_assignation_operator.group(1).strip(" \n\t")[2:] + ";\n")
+                        assignation_substatement = "do " + statement[statement.index("::") + 2:]
+                    else:
+                        variable_declaration_statements.append(inline_assignation_operator.group(1).strip(" \n\t") + ";\n")
+                        assignation_substatement = statement[statement.index("::") + 2:]
                     other_statements.append(assignation_substatement)
                 else:
                     other_statements.append(statement)

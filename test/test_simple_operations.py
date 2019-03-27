@@ -64,6 +64,8 @@ class SimpleOperationsTest(unittest.TestCase):
         program {
         stuff;
         integer::aNumber = 40;
+        do integer::n = 1,10 {
+        }
         }"""
         expected = """void function myFunction() {
         integer::a;
@@ -72,8 +74,11 @@ class SimpleOperationsTest(unittest.TestCase):
         }
         program {
         integer::aNumber;
+        integer::n;
         stuff;
         aNumber = 40;
+        do n = 1,10 {
+        }
         }
         """
 
