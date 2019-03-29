@@ -145,10 +145,12 @@ def move_variable_declaration_to_start_of_block(text: str) -> str:
                 inline_assignation_operator = re.search(r"((.|\s)+::(.|\s)+)(=[^=])", statement)
                 if inline_assignation_operator:
                     if inline_assignation_operator.group(1).strip(" \n\t").startswith("do"):
-                        variable_declaration_statements.append(inline_assignation_operator.group(1).strip(" \n\t")[2:] + ";\n")
+                        variable_declaration_statements.append(
+                            inline_assignation_operator.group(1).strip(" \n\t")[2:] + ";\n")
                         assignation_substatement = "do " + statement[statement.index("::") + 2:]
                     else:
-                        variable_declaration_statements.append(inline_assignation_operator.group(1).strip(" \n\t") + ";\n")
+                        variable_declaration_statements.append(
+                            inline_assignation_operator.group(1).strip(" \n\t") + ";\n")
                         assignation_substatement = statement[statement.index("::") + 2:]
                     other_statements.append(assignation_substatement)
                 else:
@@ -308,7 +310,6 @@ def convert_conditional_blocks(text: str) -> str:
     edits: List[CodeEdit] = []
 
     for if_declaration in re.finditer(r"if\s*(\(.*\))\s*\{", text):
-        previous_word = _previous_word(text, if_declaration.start())
         if_condition = if_declaration.group(1)
 
         block_end = _block_end(text, if_declaration.end())
@@ -327,5 +328,18 @@ def convert_conditional_blocks(text: str) -> str:
 
         edits.append(CodeEdit(else_declaration.start(), else_declaration.end(), "else\n"))
         edits.append(CodeEdit(block_end, block_end + 1, "end if;\n"))
+
+    return apply_edits(text, edits)
+
+
+def replace_object_reference_type_declaration(text: str) -> str:
+    edits: List[CodeEdit] = []
+    for declaration in re.finditer(r"(\w+),\s*object\s*::\s*(.+)$", text, flags=re.M):
+        if _is_inside_string_block(declaration.start(), text):
+            continue
+
+        edits.append(CodeEdit(declaration.start(),
+                              declaration.end(),
+                              f"type({declaration.group(1)}),pointer::{declaration.group(2).strip(',')}"))
 
     return apply_edits(text, edits)

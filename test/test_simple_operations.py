@@ -6,7 +6,8 @@ from jivago_streams import Stream
 from dialect.simple_operations import remove_curly_brackets, strip_comments, remove_line_splits_inside_blocks, \
     move_function_parameter_type_declaration_to_body, move_variable_declaration_to_start_of_block, \
     translate_return_statement, declare_invoked_function_return_types, add_implicit_none, \
-    add_name_to_unnamed_program_blocks, translate_case_sensitive_identifier, convert_conditional_blocks
+    add_name_to_unnamed_program_blocks, translate_case_sensitive_identifier, convert_conditional_blocks, \
+    replace_object_reference_type_declaration
 
 
 class SimpleOperationsTest(unittest.TestCase):
@@ -194,6 +195,19 @@ class SimpleOperationsTest(unittest.TestCase):
         actual = convert_conditional_blocks(input)
 
         self.assertEqualIgnoreWhitespace(expected, actual)
+
+    def test_replaceObjectReferenceDeclaration(self):
+        input = """integer function myFunction() {
+        myType, object :: myInstance;
+        }"""
+        expected = """integer function myFunction() {
+        type(myType),pointer::myInstance;
+        }"""
+
+        actual = replace_object_reference_type_declaration(input)
+
+        self.assertEqualIgnoreWhitespace(expected, actual)
+
 
     def assertEqualIgnoreWhitespace(self, expected: str, actual: str) -> None:
         expected = re.sub(" *, *", ",", expected)
