@@ -7,7 +7,7 @@ from dialect.simple_operations import remove_curly_brackets, strip_comments, rem
     move_function_parameter_type_declaration_to_body, move_variable_declaration_to_start_of_block, \
     translate_return_statement, declare_invoked_function_return_types, add_implicit_none, \
     add_name_to_unnamed_program_blocks, translate_case_sensitive_identifier, convert_conditional_blocks, \
-    replace_object_reference_type_declaration
+    replace_object_reference_type_declaration, inline_pointer_cast_function
 
 
 class SimpleOperationsTest(unittest.TestCase):
@@ -208,6 +208,22 @@ class SimpleOperationsTest(unittest.TestCase):
 
         self.assertEqualIgnoreWhitespace(expected, actual)
 
+    def test_replaceCastFunctionWithInlineBlock(self):
+        input = """integer function myFunction() {
+        myType, object :: myInstance;
+        myInstance = cast(a_pointer);
+        }"""
+        expected = """integer function myFunction() {
+        myType, object :: myInstance;
+        select type(a => a_pointer)
+        class is (myType)
+        myInstance => a
+        end select;
+        }"""
+
+        actual = inline_pointer_cast_function(input)
+
+        self.assertEqualIgnoreWhitespace(expected, actual)
 
     def assertEqualIgnoreWhitespace(self, expected: str, actual: str) -> None:
         expected = re.sub(" *, *", ",", expected)

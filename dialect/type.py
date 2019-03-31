@@ -1,3 +1,10 @@
+import re
+
+from jivago_streams import Stream
+
+from dialect.exceptions import InvalidSymbolTypeDeclarationException
+
+
 class VariableDeclaration(object):
 
     def __init__(self, type: str, identifier: str):
@@ -23,3 +30,20 @@ class CodeBlock(object):
         self.block_content = block_content
         self.block_start = block_start
         self.block_end = block_end
+
+
+class SymbolDeclaration(object):
+
+    def __init__(self, symbol_name: str, line: str):
+        self.symbol_name = symbol_name
+        self.line = line.strip("\n \t")
+
+    def is_gc_object(self) -> bool:
+        return bool(re.search(r"object\s*(,\w+)*::", self.line))
+
+    def get_object_declared_type(self) -> str:
+        return Stream(re.finditer(r"(\w+)", self.line)) \
+            .first() \
+            .map(lambda x: x.group(1)) \
+            .map(lambda x: x if not "type" in x else re.search(r"type\((w+)\)", x).group(1)) \
+            .orElseThrow(InvalidSymbolTypeDeclarationException(self.symbol_name))

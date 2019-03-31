@@ -4,8 +4,8 @@ from typing import List, Iterable
 from jivago_streams import Stream
 
 from dialect.edits import CodeEdit, apply_edits, remove_unused_whitespace
-from dialect.exceptions import TranslationException
-from dialect.type import VariableDeclaration, FunctionBlock, CodeBlock
+from dialect.exceptions import TranslationException, CannotFindSymbolDeclarationException
+from dialect.type import VariableDeclaration, FunctionBlock, SymbolDeclaration
 
 VALID_BLOCK_NAMES = ("function", "subroutine", "module", "do", "program")
 
@@ -342,4 +342,29 @@ def replace_object_reference_type_declaration(text: str) -> str:
                               declaration.end(),
                               f"type({declaration.group(1)}),pointer::{declaration.group(2).strip(',')}"))
 
+    return apply_edits(text, edits)
+
+
+def _find_symbol_declaration(symbol_name: str, text: str, usage_position: int) -> SymbolDeclaration:
+    return Stream(reversed(list(
+        re.finditer(r"[^:\n;]*::\s*(\w+,)*" + symbol_name + r".*$", text[:usage_position], flags=re.M)))) \
+        .firstMatch(lambda x: not _is_inside_string_block(x.start(), text)) \
+        .map(lambda x: SymbolDeclaration(symbol_name, text[x.start(): x.end()])) \
+        .orElseThrow(CannotFindSymbolDeclarationException(symbol_name))
+
+
+def inline_pointer_cast_function(text: str) -> str:
+    edits: List[CodeEdit] = []
+    for cast_call in re.finditer(r"(\w+)\s*=\s*cast\((\w+)\)", text):
+        if _is_inside_string_block(cast_call.start(), text):
+            continue
+        destination_variable = cast_call.group(1)
+        source_pointer = cast_call.group(2)
+
+        target_symbol_declaration = _find_symbol_declaration(destination_variable, text, cast_call.start())
+        if target_symbol_declaration.is_gc_object():
+            edits.append(CodeEdit(cast_call.start(), cast_call.end(), f"""select type(a => {source_pointer})
+            class is ({target_symbol_declaration.get_object_declared_type()})
+            {destination_variable} => a
+            end select"""))
     return apply_edits(text, edits)
