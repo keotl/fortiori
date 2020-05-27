@@ -1,0 +1,23 @@
+language: python
+
+python:
+- '3.6'
+
+install:
+- pip install -r requirements.txt
+script:
+- sh run-tests.sh
+branches:
+  only:
+  - master
+  - develop
+  - /^\d+\.\d+(\.\d+)?(-\S*)?$/
+deploy:
+  provider: pypi
+  user: keotl
+  password:
+      secure: "t+UPic5chJPWdxmDTo3TMC6ho1yUTfEQ3F3c1F4+Lr/l9mR61SOqFU2977ypYnmyID4+z8+YQpHpQ+99FlT1KM4JuBswurbphKcujXKtZzqlZPE5dfGx8CQ9RYLl36oe5afazJ87hLXs9oxveMBWxTvyDG3doCbsebutoHtNTK/jzkfpoeIA9WLGD//VazfAaYKicrTpoTygk95v3UoJk1ICq+e8I3em7ZB+N1eO8JQACkqSgHTAE9AuHjX4XebKHiVOIHGSGWiuQqK2dsdjvOZVZInnbRTVLizI54YWWRTlEQYaDiNvmIiuFgrktYCcInj58qokA/3Nsk09tJq4dibybclyEYM/8OdNMRTxsjRLyuxqkyxzTWIlxSWcVndyM61RNv/Qm3/DzG6q61BsCmuRSYKL/pzbVq2bq+Kn6pFtKzrJGMZ0DiPqzbYYTdzCBaBgW12RhqFgUboQK1206/B23r8IFmbG0BEKq0XPsJ2ffiI0jAam98bMXJV4dMk2Yu6LxY0FZfC3XKtLiusYqMpfYmI8CnPC5JlXZpJZoXXS92OMw5lNsZLUrqObP32yAyUz2LxdLTEckSA6Sa01uLarINrZ+yuxuv76tuOHX4XRkjeTj49JzNoGmQgOTAPU52twSu/mZhiLuPk2dMnVklXhR6mR6OxRxvpjv2xU130="
+
+  on:
+    tags: true
+    repo: keotl/fortiori

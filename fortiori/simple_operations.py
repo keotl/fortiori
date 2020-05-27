@@ -3,9 +3,9 @@ from typing import List, Iterable
 
 from jivago_streams import Stream
 
-from dialect.edits import CodeEdit, apply_edits, remove_unused_whitespace
-from dialect.exceptions import TranslationException, CannotFindSymbolDeclarationException
-from dialect.type import VariableDeclaration, FunctionBlock, SymbolDeclaration
+from fortiori.edits import CodeEdit, apply_edits, remove_unused_whitespace
+from fortiori.exceptions import TranslationException, CannotFindSymbolDeclarationException
+from fortiori.type import VariableDeclaration, FunctionBlock, SymbolDeclaration
 
 VALID_BLOCK_NAMES = ("function", "subroutine", "module", "do", "program")
 

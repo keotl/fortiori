@@ -2,7 +2,7 @@ import re
 
 from jivago_streams import Stream
 
-from dialect.exceptions import InvalidSymbolTypeDeclarationException
+from fortiori.exceptions import InvalidSymbolTypeDeclarationException
 
 
 class VariableDeclaration(object):
