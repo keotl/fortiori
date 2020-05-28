@@ -1,0 +1,33 @@
+integer function getf$irstp$rime(lower,higher) 
+implicit none;
+integer::lower
+integer::higher
+ getf$irstp$rime = 5;
+return;
+end function;
+program main 
+implicit none;
+integer::getf$irstp$rime;
+integer::p$rime;
+integer::p$$rime$$;
+ integer::n;
+print*, "Getting a prime...";
+p$rime = getf$irstp$rime(1,10);
+p$$rime$$ = 10;
+ if (p$$rime$$ == 10) then
+ print*, "condition is true";
+ else
+ print*, "condition is false";
+ end if;
+do n = 1,10 
+ print*, n;
+ 
+end do;
+ do while ( n < 15) 
+ print*, n, "incrementing...";
+ n = n+1;
+ 
+end do;
+ print*, "This is a prime:", p$rime;
+ print*, "This is another prime:", p$$rime$$;
+end program;
