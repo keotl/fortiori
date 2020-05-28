@@ -6,6 +6,7 @@ gfortran and the like.
 
 ## Supported Features
 - [x] Declaration of function return types in caller
+- [x] Inline function parameter type declaration
 - [x] Case-sensitive identifiers
 - [x] Automatically add 'implicit none'
 - [x] Return statement with value
@@ -13,6 +14,7 @@ gfortran and the like.
 - [ ] Convert void functions to subroutines
 - [x] If-else conditional blocks
 - [x] Do loops with inline variable declaration
+- [x] Object type `cast()` function to generate a switch statement
 
 ## Example (WIP)
 ```fortran
