@@ -21,7 +21,7 @@ setup(
     name='fortiori',
     version_format='{tag}',
     setup_requires=['setuptools-git-version'],
-    description='A proof of concept for adding syntactic sugar to FORTRAN.',
+    description='Syntactic sugar for FORTRAN afficionados. (Proof of concept)',
     long_description=long_description,
     long_description_content_type='text/markdown',
 

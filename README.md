@@ -1,6 +1,6 @@
 # Fortiori
 A proof of concept for adding syntactic sugar to FORTRAN. The goal of _fortiori_
-is to provide a friendlier syntax for FORTRAN afficionados while still producing
+is to provide a friendlier syntax for FORTRAN enthusiasts while still producing
 mostly-compliant FORTRAN code which can then be compiled normally using
 gfortran and the like.
 
