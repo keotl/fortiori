@@ -1,8 +1,6 @@
 language: python
-
 python:
 - '3.6'
-
 install:
 - pip install -r requirements.txt
 script:
@@ -11,13 +9,12 @@ branches:
   only:
   - master
   - develop
-  - /^\d+\.\d+(\.\d+)?(-\S*)?$/
+  - "/^\\d+\\.\\d+(\\.\\d+)?(-\\S*)?$/"
 deploy:
   provider: pypi
   user: keotl
   password:
-      secure: "t+UPic5chJPWdxmDTo3TMC6ho1yUTfEQ3F3c1F4+Lr/l9mR61SOqFU2977ypYnmyID4+z8+YQpHpQ+99FlT1KM4JuBswurbphKcujXKtZzqlZPE5dfGx8CQ9RYLl36oe5afazJ87hLXs9oxveMBWxTvyDG3doCbsebutoHtNTK/jzkfpoeIA9WLGD//VazfAaYKicrTpoTygk95v3UoJk1ICq+e8I3em7ZB+N1eO8JQACkqSgHTAE9AuHjX4XebKHiVOIHGSGWiuQqK2dsdjvOZVZInnbRTVLizI54YWWRTlEQYaDiNvmIiuFgrktYCcInj58qokA/3Nsk09tJq4dibybclyEYM/8OdNMRTxsjRLyuxqkyxzTWIlxSWcVndyM61RNv/Qm3/DzG6q61BsCmuRSYKL/pzbVq2bq+Kn6pFtKzrJGMZ0DiPqzbYYTdzCBaBgW12RhqFgUboQK1206/B23r8IFmbG0BEKq0XPsJ2ffiI0jAam98bMXJV4dMk2Yu6LxY0FZfC3XKtLiusYqMpfYmI8CnPC5JlXZpJZoXXS92OMw5lNsZLUrqObP32yAyUz2LxdLTEckSA6Sa01uLarINrZ+yuxuv76tuOHX4XRkjeTj49JzNoGmQgOTAPU52twSu/mZhiLuPk2dMnVklXhR6mR6OxRxvpjv2xU130="
-
+    secure: UozGSBXmqoS1U2poK6O4b5CmazVwTnaCEHwFYqXGmV3tvJVjKa49iLrN+8qQgvz7EhB1eLUYKttXAMh8CsOTuHqYTY+lk7T/6sawiwiHwhVhnmryr0FWz8PRXk0XbIJYbFAa99oNiiyn+NeRtl+qEwFCUiTUXHe4QU9UnJvknHQD+TYTOVKoGXqRkFSeJCPb/xyTQXSjiE9Hq5akhyG84bquF7fUa0y6xSqc0/gT7lubpmICqeflJB3GDgau0Gb+Y6CsoJPJsFJgF1SMl2mbHNPG/qyJZMG3YcnX3Phu4hv6q2z8tFWzEbt+F3tJ+51N79gSUfUSdTPwKtmK/bjluvzaSuQyLidN2UhdahrIDABEkLK7YgD1SyJr42nrN9d9xlNzFi89z7bAvFQsxkifNNCe57e9/K0C8Qwjz435iju9iw8T6bd/iYBXHezfKC0BVavfdHfX6drKcSLBN4Zcw6J2c8VWo0isyvBMu2s2M/Z/LWOOZWkHXkpxR3UqIZDmqrTBzn0eOP5Xgpb7QgK92TcLbyGE0RoqWZ8Wjr8SI9j8xOdo/cfF2CzMjNgRJ91P+ubCk946Ht9qsglOFwT6qbWbH3yP/HsnNk9Fmp21VpKwOQkvVv/BY0vGCCkC9K9+Ia41sYDthaSz/Fl1jvZDZ7Lo1J5CJkh5SQvO9x5HGSg=
   on:
     tags: true
     repo: keotl/fortiori
