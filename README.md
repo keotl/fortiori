@@ -15,6 +15,7 @@ gfortran and the like.
 - [x] If-else conditional blocks
 - [x] Do loops with inline variable declaration
 - [x] Object type `cast()` function to generate a switch statement
+- [x] Add name to unnamed program blocks
 
 ## Example (WIP)
 ```fortran

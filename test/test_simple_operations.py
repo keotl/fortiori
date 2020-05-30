@@ -57,6 +57,18 @@ class SimpleOperationsTest(unittest.TestCase):
 
         self.assertEqualIgnoreWhitespace(expected, actual)
 
+    def test_inlineParameterDeclaration_withNestedParentheses(self):
+        input = """integer function func(character(len= 3)::a, character(len =*)::b) {
+        }"""
+        expected = """integer function func(a,b) {
+        character(len= 3)::a
+        character(len =*)::b
+        }"""
+
+        actual = move_function_parameter_type_declaration_to_body(input)
+
+        self.assertEqualIgnoreWhitespace(expected, actual)
+
     def test_moveVariableDeclarationToStartOfFunction(self):
         input = """void function myFunction() {
         print("hello");
@@ -124,6 +136,19 @@ class SimpleOperationsTest(unittest.TestCase):
         input = """integer function myFunction() {
         }"""
         expected = """integer function myFunction() {
+        implicit none;
+        }"""
+
+        actual = add_implicit_none(input)
+
+        self.assertEqualIgnoreWhitespace(expected, actual)
+
+    def test_addImplicitNoneAfterUseStatements(self):
+        input = """integer function myFunction() {
+        use hello
+        }"""
+        expected = """integer function myFunction() {
+        use hello
         implicit none;
         }"""
 

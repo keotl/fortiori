@@ -1,11 +1,11 @@
 import re
 from typing import List, Iterable
 
-from jivago_streams import Stream
+from jivago_streams import Stream, Nullable
 
 from fortiori.edits import CodeEdit, apply_edits, remove_unused_whitespace
-from fortiori.exceptions import TranslationException, CannotFindSymbolDeclarationException
-from fortiori.type import VariableDeclaration, FunctionBlock, SymbolDeclaration
+from fortiori.exceptions import CannotFindSymbolDeclarationException
+from fortiori.type import VariableDeclaration, FunctionBlock, SymbolDeclaration, CodeBlock
 
 VALID_BLOCK_NAMES = ("function", "subroutine", "module", "do", "program")
 
@@ -79,14 +79,14 @@ def _is_inside_string_block(position: int, text: str) -> bool:
 
 def move_function_parameter_type_declaration_to_body(text: str) -> str:
     edits: List[CodeEdit] = []
-    for function_declaration in re.finditer(r"^\s*\S+( |\n)+function( |\n)+.+( |\n)*\(", text):
+    for function_declaration in re.finditer(r"^\s*\S+( |\n)+function( |\n)+[^\(]+( |\n)*\(", text, re.MULTILINE):
         if _is_inside_string_block(function_declaration.start(), text):
             continue
 
         depth = 1
         declaration_closing_parenthesis = None
         for parenthesis in re.finditer(r"(\(|\))", text[function_declaration.end():]):
-            if text[parenthesis.start()] == '(':
+            if text[function_declaration.end():][parenthesis.start()] == '(':
                 depth += 1
             else:
                 depth -= 1
@@ -137,7 +137,7 @@ def move_variable_declaration_to_start_of_block(text: str) -> str:
                     block_end = bracket.start()
                     break
 
-            code_block_str = text[block_start:block_end].strip("\n \t")
+            code_block_str = text[block_start:block_end]
             variable_declaration_statements = []
             other_statements = []
 
@@ -181,7 +181,7 @@ def _find_function_blocks(text: str, block_name: str = "function") -> Iterable[F
                 block_end = bracket.start()
                 break
 
-        yield FunctionBlock(function_name, block_start, block_end, text[block_start:block_end].strip("\n \t"))
+        yield FunctionBlock(function_name, block_start, block_end, text[block_start:block_end])
 
 
 def translate_return_statement(text: str) -> str:
@@ -216,8 +216,9 @@ def declare_invoked_function_return_types(text: str) -> str:
                 invoked_function_declaration = re.search(
                     r"([^ \n\t]+)\s+function\s+" + invoked_function_name + r"\(.*\)",
                     text)
-                if not invoked_function_name:
-                    raise TranslationException(f"Function {invoked_function_name} is never declared.")
+                if not invoked_function_declaration:
+                    print(f"Warning: Function {invoked_function_name} is never declared.")
+                    continue
 
                 function_declared_type = invoked_function_declaration.group(1)
                 declaration_statements.append(f"{function_declared_type}::{invoked_function_name};")
@@ -232,14 +233,21 @@ def add_implicit_none(text: str) -> str:
     edits: List[CodeEdit] = []
     for block_name in BLOCKS_WHICH_DECLARE_VARIABLES:
         for block in _find_function_blocks(text, block_name):
-            edits.append(CodeEdit(block.block_start, block.block_start, "\nimplicit none;\n"))
+            insert_pos = _find_pos_after_last_use_statement(block)
+            edits.append(CodeEdit(insert_pos, insert_pos, "\nimplicit none;\n"))
 
     return apply_edits(text, edits)
+
+def _find_pos_after_last_use_statement(block: CodeBlock) -> int:
+    use_statements = [x for x in re.finditer(r"^\s*use .*$", block.block_content, re.MULTILINE)]
+    if use_statements:
+        return use_statements[-1].end() + block.block_start
+    return block.block_start
 
 
 def add_name_to_unnamed_program_blocks(text: str) -> str:
     edits: List[CodeEdit] = []
-    for program_declaration in re.finditer(r"[^\w\d]program\s*\{", text):
+    for program_declaration in re.finditer(r"[^\w\d\n]*program\s*\{", text):
         if _is_inside_string_block(program_declaration.start(), text):
             continue
         edits.append(CodeEdit(program_declaration.start(), program_declaration.end(), "\nprogram main {\n"))
