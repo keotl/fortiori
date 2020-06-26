@@ -7,7 +7,7 @@ from fortiori.edits import CodeEdit, apply_edits, remove_unused_whitespace
 from fortiori.exceptions import CannotFindSymbolDeclarationException
 from fortiori.type import VariableDeclaration, FunctionBlock, SymbolDeclaration, CodeBlock
 
-VALID_BLOCK_NAMES = ("function", "subroutine", "module", "do", "program")
+VALID_BLOCK_NAMES = ("function", "subroutine", "module", "do", "program", "type")
 
 
 def strip_comments(text: str) -> str:
@@ -79,7 +79,9 @@ def _is_inside_string_block(position: int, text: str) -> bool:
 
 def move_function_parameter_type_declaration_to_body(text: str) -> str:
     edits: List[CodeEdit] = []
-    for function_declaration in re.finditer(r"^\s*\S+( |\n)+function( |\n)+[^\(]+( |\n)*\(", text, re.MULTILINE):
+
+    for function_declaration in re.finditer(r"^\s*\S+( |\n)+(function|subroutine)( |\n)+[^\(]+( |\n)*\(", text,
+                                            re.MULTILINE):
         if _is_inside_string_block(function_declaration.start(), text):
             continue
 
@@ -92,6 +94,7 @@ def move_function_parameter_type_declaration_to_body(text: str) -> str:
                 depth -= 1
             if depth == 0:
                 declaration_closing_parenthesis = parenthesis.start() + function_declaration.end()
+                break
 
         function_opening_curly_bracket = text.index("{", function_declaration.end())
         parameter_str = text[function_declaration.end():declaration_closing_parenthesis]
@@ -128,37 +131,45 @@ def move_variable_declaration_to_start_of_block(text: str) -> str:
             block_end = -1
             depth = 0
             for bracket in re.finditer(r"(\{|\})", text[declaration.start():]):
-                if text[bracket.start()] == "{":
+                if text[declaration.start():][bracket.start()] == "{":
                     depth += 1
                 else:
                     depth -= 1
 
                 if depth == 0:
-                    block_end = bracket.start()
+                    block_end = declaration.start() + bracket.start()
                     break
 
             code_block_str = text[block_start:block_end]
             variable_declaration_statements = []
             other_statements = []
+            use_statements = []
 
             for statement in code_block_str.split("\n"):
-                inline_assignation_operator = re.search(r"((.|\s)+::(.|\s)+)(=[^=])", statement)
+                inline_assignation_operator = re.search(r"((.|\s)+::([^=]|\s)*)(=?)", statement)
                 if inline_assignation_operator:
-                    if inline_assignation_operator.group(1).strip(" \n\t").startswith("do"):
+                    if "=" not in inline_assignation_operator.group(4):
+                        variable_declaration_statements.append(
+                            inline_assignation_operator.group(1).strip(" \n\t;") + ";\n")
+                    elif inline_assignation_operator.group(1).strip(" \n\t").startswith("do"):
                         variable_declaration_statements.append(
                             inline_assignation_operator.group(1).strip(" \n\t")[2:] + ";\n")
                         assignation_substatement = "do " + statement[statement.index("::") + 2:]
+                        other_statements.append(assignation_substatement)
                     else:
                         variable_declaration_statements.append(
                             inline_assignation_operator.group(1).strip(" \n\t") + ";\n")
                         assignation_substatement = statement[statement.index("::") + 2:]
-                    other_statements.append(assignation_substatement)
+                        other_statements.append(assignation_substatement)
                 else:
-                    other_statements.append(statement)
+                    if re.findall(r"^\s*use .*$", statement):
+                        use_statements.append(statement)
+                    else:
+                        other_statements.append(statement)
 
             edits.append(CodeEdit(block_start,
                                   block_end,
-                                  "\n" + "\n".join(variable_declaration_statements) +
+                                  "\n" + "\n".join(use_statements) + "\n" + "\n".join(variable_declaration_statements) +
                                   "\n".join(other_statements) + "\n"))
     return apply_edits(text, edits)
 
@@ -212,12 +223,14 @@ def declare_invoked_function_return_types(text: str) -> str:
             for function_call in re.finditer(r"(new\s)?([^ \n\t]+)\(.*\)", content):
                 if function_call.group(1):
                     continue  # new was found
-                invoked_function_name = function_call.group(2)
-                invoked_function_declaration = re.search(
-                    r"([^ \n\t]+)\s+function\s+" + invoked_function_name + r"\(.*\)",
-                    text)
-                if not invoked_function_declaration:
-                    print(f"Warning: Function {invoked_function_name} is never declared.")
+                try:
+                    invoked_function_name = function_call.group(2)
+                    invoked_function_declaration = re.search(
+                        r"([^ \n\t]+)\s+function\s+" + invoked_function_name + r"\(.*\)", text)
+                    if not invoked_function_declaration:
+                        print(f"Warning: Function {invoked_function_name} is never declared.")
+                        continue
+                except:
                     continue
 
                 function_declared_type = invoked_function_declaration.group(1)
@@ -237,6 +250,7 @@ def add_implicit_none(text: str) -> str:
             edits.append(CodeEdit(insert_pos, insert_pos, "\nimplicit none;\n"))
 
     return apply_edits(text, edits)
+
 
 def _find_pos_after_last_use_statement(block: CodeBlock) -> int:
     use_statements = [x for x in re.finditer(r"^\s*use .*$", block.block_content, re.MULTILINE)]
