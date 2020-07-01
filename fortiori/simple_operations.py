@@ -183,13 +183,13 @@ def _find_function_blocks(text: str, block_name: str = "function") -> Iterable[F
         depth = 0
         function_name = declaration.group(1)
         for bracket in re.finditer(r"(\{|\})", text[declaration.start():]):
-            if text[bracket.start()] == "{":
+            if text[bracket.start() + declaration.start()] == "{":
                 depth += 1
             else:
                 depth -= 1
 
             if depth == 0:
-                block_end = bracket.start()
+                block_end = declaration.start() + bracket.start()
                 break
 
         yield FunctionBlock(function_name, block_start, block_end, text[block_start:block_end])

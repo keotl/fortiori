@@ -116,11 +116,23 @@ class SimpleOperationsTest(unittest.TestCase):
         self.assertEqualIgnoreWhitespace(expected, actual)
 
     def test_return_statement(self):
-        input = """integer function myFunction() {
+        input = """
+        someotherstuff;
+        integer function myFunction() {
         return 5;
-        }"""
-        expected = """integer function myFunction() {
+        }
+        integer function otherFunction() {
+        return 6;
+        }
+        """
+        expected = """
+        someotherstuff;
+        integer function myFunction() {
         myFunction = 5;
+        return;
+        }
+        integer function otherFunction() {
+        otherFunction = 6;
         return;
         }"""
 

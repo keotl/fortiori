@@ -14,7 +14,7 @@ class VariableDeclaration(object):
 
 class FunctionBlock(object):
 
-    def __init__(self, function_name: str, block_start: str, block_end: str, block_content: str):
+    def __init__(self, function_name: str, block_start: int, block_end: int, block_content: str):
         """block start/end : Opening and closing curly brackets."""
         self.block_content = block_content
         self.function_name = function_name

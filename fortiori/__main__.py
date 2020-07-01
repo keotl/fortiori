@@ -20,7 +20,7 @@ for file in args.files:
         text = strip_comments(text)
         text = move_function_parameter_type_declaration_to_body(text)
         text = move_variable_declaration_to_start_of_block(text)
-        text = declare_invoked_function_return_types(text)
+        # text = declare_invoked_function_return_types(text)
         text = translate_return_statement(text)
         text = remove_line_splits_inside_blocks(text)
         text = add_implicit_none(text)
