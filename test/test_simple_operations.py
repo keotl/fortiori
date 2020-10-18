@@ -83,6 +83,16 @@ class SimpleOperationsTest(unittest.TestCase):
 
         self.assertEqualIgnoreWhitespace(expected, actual)
 
+    def test_inlineParameterDeclaration_withParametersWithoutADeclaration_shouldPassAsIs(self):
+        input = """integer function func(a) {
+        }"""
+        expected = """integer function func(a) {
+        }"""
+
+        actual = move_function_parameter_type_declaration_to_body(input)
+
+        self.assertEqualIgnoreWhitespace(expected, actual)
+
     def test_moveVariableDeclarationToStartOfFunction(self):
         input = """void function myFunction() {
         print(,text="hello");
